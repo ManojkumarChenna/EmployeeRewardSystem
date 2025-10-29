@@ -14,79 +14,74 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-
-import com.microservice.account.service.UserInfoService;
-
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import com.microservice.account.service.UserInfoService;
+
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig { 
-
+public class SecurityConfig {
 	@Autowired
 	private UserInfoService userInfoService;
 
-	@Bean 
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf(AbstractHttpConfigurer:: disable)
-            .authorizeHttpRequests(authorize -> authorize
-            	.antMatchers(HttpMethod.GET,"/api/login").authenticated()	
-            	.antMatchers(HttpMethod.GET,"/api/employee/getall").hasAnyAuthority("HR","MANAGER") 
-            	.antMatchers(HttpMethod.POST,"/api/hr/add").permitAll()
-            	.antMatchers(HttpMethod.GET,"/api/hr/getall").permitAll()
-            	.antMatchers(HttpMethod.POST,"/api/manager/add").permitAll()
-            	.antMatchers(HttpMethod.GET,"/api/manager/all").permitAll()
-            	.antMatchers(HttpMethod.POST,"/api/employee/add/{managerId}").hasAuthority("HR")
-            	.antMatchers(HttpMethod.GET,"/api/hr/stat").hasAuthority("HR")
-            	.antMatchers(HttpMethod.GET,"/api/hr/manager/employee").hasAnyAuthority("HR","MANAGER")
-            	.antMatchers(HttpMethod.GET,"/api/jobtype").hasAuthority("HR")
-            	.antMatchers(HttpMethod.GET,"/api/search/employee/manager/{searchStr}").permitAll()
-            	.antMatchers(HttpMethod.GET,"/api/manager/employee").hasAuthority("MANAGER")
-            	.antMatchers(HttpMethod.POST,"/api/task/employee/{eid}").hasAuthority("MANAGER")
-             	.antMatchers(HttpMethod.GET,"/api/task/{eid}").hasAnyAuthority("MANAGER","EMPLOYEE")
-             	.antMatchers(HttpMethod.GET,"/api/task/archive/{tid}").hasAuthority("MANAGER")
-             	.antMatchers(HttpMethod.POST,("/api/items/add")).hasAuthority("HR")
-             	.antMatchers(HttpMethod.GET,"/api/item/getAll").hasAuthority("EMPLOYEE")
-             	.antMatchers(HttpMethod.GET,"/api/employee/rewardpoints").hasAuthority("EMPLOYEE")
-             	.antMatchers(HttpMethod.POST,"/api/employee/item/post/{id}").hasAuthority("EMPLOYEE")
-             	.antMatchers(HttpMethod.PUT,"/api/update/employee/rewardpoints/{rewardPoints}").hasAuthority("EMPLOYEE")
-             	
-            	.anyRequest().permitAll()
-            )
-            .httpBasic(Customizer.withDefaults());
-        return http.build();
-    }
-	
 	@Bean
-	public AuthenticationManager authenticationManager(){
-		DaoAuthenticationProvider dao = new DaoAuthenticationProvider();
-		dao.setPasswordEncoder(getEncoder());
-		dao.setUserDetailsService(userInfoService);
-		ProviderManager manager = new ProviderManager(dao);
-		return manager; 
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+	    http
+	        .csrf(AbstractHttpConfigurer::disable)
+	        .authorizeHttpRequests(authorize -> authorize
+	            .requestMatchers(HttpMethod.GET, "/api/login").authenticated()
+	            .requestMatchers(HttpMethod.GET, "/api/employee/getall").hasAnyAuthority("HR", "MANAGER")
+	            .requestMatchers(HttpMethod.POST, "/api/hr/add").permitAll()
+	            .requestMatchers(HttpMethod.GET, "/api/hr/getall").permitAll()
+	            .requestMatchers(HttpMethod.POST, "/api/manager/add").permitAll()
+	            .requestMatchers(HttpMethod.GET, "/api/manager/all").permitAll()
+	            .requestMatchers(HttpMethod.POST, "/api/employee/add/{managerId}").hasAuthority("HR")
+	            .requestMatchers(HttpMethod.GET, "/api/hr/stat").hasAuthority("HR")
+	            .requestMatchers(HttpMethod.GET, "/api/hr/manager/employee").hasAnyAuthority("HR", "MANAGER")
+	            .requestMatchers(HttpMethod.GET, "/api/jobtype").hasAuthority("HR")
+	            .requestMatchers(HttpMethod.GET, "/api/search/employee/manager/{searchStr}").permitAll()
+	            .requestMatchers(HttpMethod.GET, "/api/manager/employee").hasAuthority("MANAGER")
+	            .requestMatchers(HttpMethod.POST, "/api/task/employee/{eid}").hasAuthority("MANAGER")
+	            .requestMatchers(HttpMethod.GET, "/api/task/{eid}").hasAnyAuthority("MANAGER", "EMPLOYEE")
+	            .requestMatchers(HttpMethod.GET, "/api/task/archive/{tid}").hasAuthority("MANAGER")
+	            .requestMatchers(HttpMethod.POST, "/api/items/add").hasAuthority("HR")
+	            .requestMatchers(HttpMethod.GET, "/api/item/getAll").hasAuthority("EMPLOYEE")
+	            .requestMatchers(HttpMethod.GET, "/api/employee/rewardpoints").hasAuthority("EMPLOYEE")
+	            .requestMatchers(HttpMethod.POST, "/api/employee/item/post/{id}").hasAuthority("EMPLOYEE")
+	            .requestMatchers(HttpMethod.PUT, "/api/update/employee/rewardpoints/{rewardPoints}").hasAuthority("EMPLOYEE")
+	            .anyRequest().permitAll()
+	        )
+	        .httpBasic(Customizer.withDefaults());
+
+	    return http.build();
 	}
-	
+
+	@Bean
+	public AuthenticationManager authenticationManager() {
+	    DaoAuthenticationProvider dao = new DaoAuthenticationProvider();
+	    dao.setPasswordEncoder(getEncoder());
+	    dao.setUserDetailsService(userInfoService);
+	    return new ProviderManager(dao);
+	}
+
 	@Configuration
-	public class CorsConfig {
+	public static class CorsConfig {
 	    @Bean
 	    public WebMvcConfigurer corsConfigurer() {
 	        return new WebMvcConfigurer() {
 	            @Override
 	            public void addCorsMappings(CorsRegistry registry) {
 	                registry.addMapping("/**")
-	                        .allowedOrigins("http://localhost:3000")
-	                        .allowedMethods("GET","POST","PUT","DELETE","OPTIONS");
+	                    .allowedOrigins("http://localhost:3000")
+	                    .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS");
 	            }
 	        };
 	    }
 	}
-	
+
 	@Bean
 	public PasswordEncoder getEncoder() {
-		PasswordEncoder encoder = new BCryptPasswordEncoder();
-		return encoder; 
+	    return new BCryptPasswordEncoder();
 	}
-	
 }
